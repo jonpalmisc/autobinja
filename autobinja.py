@@ -3,15 +3,16 @@
 """
 Run an arbitrary Binary Ninja script headlessly
 
-Usage: autobinja.py [-hwqDBO] [--refresh=S] <binary> [<script>]
+Usage: autobinja.py [-hwqDBO] [--output=PATH] [--refresh=N] <binary> [<script>]
 
 Options:
   -h, --help           Show this help message
-  -r, --refresh=S      Refresh rate during wait period (default: 5 seconds)
+  -r, --refresh=N      Check script readiness every N seconds (default: 5)
   -w, --wait           Wait for analysis to complete before running the script
   -q, --quiet          Silence all Binary Ninja log output
   -D, --save-db        Save an analysis database once the script is finished
   -B, --save-bin       Save the binary with any modifications from the script
+  -o, --output=PATH    Output name for saved binary (use with -B)
   -O, --overwrite      Overwrite the input binary when saving modifications
 """
 
@@ -117,13 +118,13 @@ def main():
     else:
         bv.update_analysis()
 
-        log("Waiting for script to be ready")
+        log("Waiting until user script is ready")
         while not script.is_ready(bv):
             time.sleep(refresh_rate)
 
     # Run the actual user script (if provided).
     if script:
-        log(f"Running script '{args['<script>']}'")
+        log(f"Running user script '{args['<script>']}'")
         script.run(bv)
 
     # Save an analysis database and/or patched binary if requested.
@@ -131,9 +132,14 @@ def main():
         log(f"Saving analysis database")
         bv.create_database(bin_path + ".bndb")
     if args["--save-bin"]:
-        # TODO: Add specific output name parameter.
-        log(f"Saving binary with modifications")
-        bv.save(bin_path + ("" if args["--overwrite"] else ".MODIFIED"))
+        output_name = bin_path
+        if args["--output"]:
+            output_name = args["--output"]
+        elif not args["--overwrite"]:
+            output_name += ".out"
+
+        log(f"Saving binary with modifications as '{output_name}'")
+        bv.save(output_name)
 
     # Analysis might still be going if the script uses a ready condition and
     # should be terminated before exiting.
