@@ -1,11 +1,17 @@
+# example.py
+#
+# This is an example user script for use with Autobinja. It defines all of the
+# possible user script functions, but specifies which are required and which can
+# be omitted if not needed.
+
 from binaryninja import BinaryView
 
 
 def analysis_options():
     """
-    Used to specify analysis options.
+    Used to specify analysis option overrides.
 
-    Does not need to be defined if default options are acceptable.
+    Can be left undefined if the default options are acceptable.
     """
 
     return {
@@ -21,7 +27,7 @@ def is_ready(bv: BinaryView):
     Typically, this funciton will check for the presence of certain data that
     the script needs to operate.
 
-    Must be defined.
+    If left undefined, the harness will wait for analysis to completely finish.
     """
 
     return bv.analysis_info.state == 2
