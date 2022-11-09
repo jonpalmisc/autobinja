@@ -1,19 +1,28 @@
 #!/usr/bin/env python3
 
 """
-Run an arbitrary Binary Ninja script headlessly
+Harness for automated headless analysis & patching with Binary Ninja
 
-Usage: autobinja.py [-hwqDBO] [--output=PATH] [--refresh=N] <binary> [<script>]
+Usage:
+  autobinja.py [-qwDBOh] [--output=PATH] [--refresh=N] <binary> [<script>]
+
+Examples:
+  autobinja.py -wD example.bin          # Wait for full analysis and save DB
+  autobinja.py -B example.bin patch.py  # Run script and save patched binary
+
+Arguments:
+  binary        Path to target binary
+  script        User script to run against the binary (optional)
 
 Options:
-  -h, --help           Show this help message
-  -r, --refresh=N      Check script readiness every N seconds (default: 5)
-  -w, --wait           Wait for analysis to complete before running the script
-  -q, --quiet          Silence all Binary Ninja log output
-  -D, --save-db        Save an analysis database once the script is finished
-  -B, --save-bin       Save the binary with any modifications from the script
-  -o, --output=PATH    Output name for saved binary (use with -B)
-  -O, --overwrite      Overwrite the input binary when saving modifications
+  -q, --quiet           Silence all Binary Ninja log output
+  -w, --wait            Wait for analysis to complete before running the script
+  -r, --refresh=N       Check script readiness every N seconds (default: 5)
+  -D, --save-db         Save an analysis database once the script is finished
+  -B, --save-bin        Save the binary with any modifications from the script
+  -O, --overwrite       Overwrite the input binary when saving modifications
+  -o, --output=PATH     Custom output path (use with `-B`, overrides `-O`)
+  -h, --help            Show this help message
 """
 
 import datetime
