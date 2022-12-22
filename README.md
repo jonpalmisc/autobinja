@@ -9,13 +9,14 @@ useful to others, but should not be treated as stable or used in production.*
 
 ## Installation
 
-Clone the repository and place `autobinja.py` in your `PATH` or somewhere you
-can easily access it. Autobinja's only dependency is `docopt`, which can be
-installed from the Python Package Index.
+Clone the repository, then install by running `pip install .`.
+
+You may also choose to manually add Autobinja to your `PATH` or run it directly;
+it does not have to be installed through Pip to work.
 
 ## Usage
 
-See `autobinja.py -h` for full help and usage information.
+See `autobinja -h` for full help and usage information.
 
 ## License
 
