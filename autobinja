@@ -1,42 +1,45 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2022 Jon Palmisciano
+#  autobinja.py
+#  https://github.com/jonpalmisc/autobinja
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
+#  Copyright (c) 2022-2023 Jon Palmisciano. All rights reserved.
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
+#  1. Redistributions of source code must retain the above copyright notice,
+#     this list of conditions and the following disclaimer.
 #
-# 3. Neither the name of the copyright holder nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+#  3. Neither the name of the copyright holder nor the names of its
+#     contributors may be used to endorse or promote products derived from
+#     this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
 
 """
 Harness for automated headless analysis & patching with Binary Ninja
 
-Usage:
-  autobinja.py [-qwDBOh] [--output=PATH] [--refresh=N] <binary> [<script>]
+Usage: autobinja [-qwDBOh] [--output=PATH] [--refresh=N] <binary> [<script>]
 
 Examples:
-  autobinja.py -wD example.bin          # Wait for full analysis and save DB
-  autobinja.py -B example.bin patch.py  # Run script and save patched binary
+  autobinja -wD example.bin          # Wait for full analysis and save DB
+  autobinja -B example.bin patch.py  # Run script and save patched binary
 
 Arguments:
   binary        Path to target binary
@@ -105,15 +108,13 @@ def main():
     # Attempt to import the Binary Ninja API
     try:
         import binaryninja as bn
-        from binaryninja import BinaryViewType
+        from binaryninja import load
     except:
-        elog("Could not import Binary Ninja module (check your Python path)")
+        elog("Could not import Binary Ninja module.")
         return
 
     log(
-        f"Initialized backend ({bn.core_product()} "
-        + bn.core_version()
-        + f", {hex(bn.core_build_id())})"
+        f"Using {bn.core_product()} {bn.core_version()} ({hex(bn.core_build_id())}) as backend."
     )
 
     # Silence logs if requested.
@@ -126,7 +127,7 @@ def main():
     # Ensure the script has a `run` function if a script was provided; it is the
     # only method that absolutely has to be defined.
     if script and not hasattr(script, "run"):
-        elog("Script must define a `run` function")
+        elog("Script must define a `run` function!")
         return
 
     # If the user script provides its own analysis options override function,
@@ -140,33 +141,33 @@ def main():
     # The `update_analysis` option is set to false here since we want to start
     # analysis manually and manually control whether we wait for analysis to
     # finish or for a certain condition specified by the user script.
-    log(f"Loading binary '{bin_path}'")
-    bv = BinaryViewType.get_view_of_file_with_options(
-        bin_path, update_analysis=False, options=analysis_options
-    )
+    log(f"Loading binary '{bin_path}'...")
+    if not (bv := load(bin_path, update_analysis=False, options=analysis_options)):
+        elog("Failed to initialize binary view!")
+        return
 
     # The harness should wait for analysis to complete prior to running the
     # script if either the `-w` (wait) flag was passed, or if the user script
     # does not define a `is_ready` function.
-    log("Starting analysis")
+    log("Starting analysis...")
     if args["--wait"] or not hasattr(script, "is_ready"):
-        log("Waiting for analysis to complete")
+        log("Waiting for analysis to complete...")
         bv.update_analysis_and_wait()
     else:
         bv.update_analysis()
 
-        log("Waiting until user script is ready")
-        while not script.is_ready(bv):
+        log("Waiting until user script is ready...")
+        while not script.is_ready(bv):  # pyright: ignore
             time.sleep(refresh_rate)
 
     # Run the actual user script (if provided).
     if script:
-        log(f"Running user script '{args['<script>']}'")
+        log(f"Running user script '{args['<script>']}'...")
         script.run(bv)
 
     # Save an analysis database and/or patched binary if requested.
     if args["--save-db"]:
-        log(f"Saving analysis database")
+        log(f"Saving analysis database...")
         bv.create_database(bin_path + ".bndb")
     if args["--save-bin"]:
         output_name = bin_path
@@ -175,13 +176,13 @@ def main():
         elif not args["--overwrite"]:
             output_name += ".out"
 
-        log(f"Saving binary with modifications as '{output_name}'")
+        log(f"Saving binary with modifications as '{output_name}'...")
         bv.save(output_name)
 
     # Analysis might still be going if the script uses a ready condition and
     # should be terminated before exiting.
     bv.abort_analysis()
-    log("All tasks complete")
+    log("All tasks complete!")
 
 
 if __name__ == "__main__":
