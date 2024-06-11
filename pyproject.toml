@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autobinja"
+version = "1.2.0"
+description = "Harness for automated headless analysis & patching with Binary Ninja"
+authors = [{name = "Jon Palmisciano", email = "jp@jonpalmisc.com"}]
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+
+requires-python = ">= 3.10"
+dependencies = [
+  "docopt",
+]
+
+[project.urls]
+Repository = "https://github.com/jonpalmisc/autobinja"
+
+[tool.setuptools]
+script-files = ["autobinja"]
