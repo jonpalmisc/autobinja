@@ -20,6 +20,6 @@ See `autobinja -h` for full help and usage information.
 
 ## License
 
-Copyright &copy; 2022 Jon Palmisciano; licensed under the BSD-3-Clause license.
+Copyright &copy; 2022-2024 Jon Palmisciano; licensed under the BSD-3-Clause license.
 
 _For more information and the full license terms, see [LICENSE.txt](LICENSE.txt)._
